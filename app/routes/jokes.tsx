@@ -1,27 +1,29 @@
-import type { LinksFunction, LoaderArgs } from "@remix-run/node";
-import { json } from "@remix-run/node";
-import { Link, Outlet, useLoaderData } from "@remix-run/react";
+import type { Joke } from "@prisma/client"
+import type { LinksFunction, LoaderArgs } from "@remix-run/node"
+import { json } from "@remix-run/node"
+import { Link, Outlet, useLoaderData } from "@remix-run/react"
 
-import stylesUrl from "~/styles/jokes.css";
-import { db } from "~/utils/db.server";
+import stylesUrl from "~/styles/jokes.css"
+import { db } from "~/utils/db.server"
 
 export const links: LinksFunction = () => {
-  return [{ rel: "stylesheet", href: stylesUrl }];
-};
+  return [{ rel: "stylesheet", href: stylesUrl }]
+}
 
+type LoaderData = { jokes: Pick<Joke, "id" | "name">[] }
 export const loader = async (args: LoaderArgs) => {
-  console.log({ args });
-  return json({
-    jokeListItems: await db.joke.findMany({
-      take: 5,
-      select: { id: true, name: true },
-      orderBy: { createdAt: "desc" },
-    }),
-  });
-};
+  console.log({ args })
+  const jokes = await db.joke.findMany({
+    take: 5,
+    select: { id: true, name: true },
+    orderBy: { createdAt: "desc" },
+  })
+  const data: LoaderData = { jokes }
+  return json(data)
+}
 
 export default function JokesRoute() {
-  const data = useLoaderData<typeof loader>();
+  const data = useLoaderData<LoaderData>()
 
   return (
     <div className="jokes-layout">
@@ -41,7 +43,7 @@ export default function JokesRoute() {
             <Link to=".">Get a random joke</Link>
             <p>Here are a few more jokes to check out:</p>
             <ul>
-              {data.jokeListItems.map((joke) => (
+              {data.jokes.map((joke) => (
                 <li key={joke.id}>
                   <Link to={joke.id}>{joke.name}</Link>
                 </li>
@@ -57,5 +59,5 @@ export default function JokesRoute() {
         </div>
       </main>
     </div>
-  );
+  )
 }

@@ -1,15 +1,24 @@
-import { PrismaClient } from "@prisma/client";
-const db = new PrismaClient();
+import { PrismaClient } from "@prisma/client"
+const db = new PrismaClient()
 
 async function seed() {
+  const natac = await db.user.create({
+    data: {
+      username: "natac",
+      // this is a hashed version of "twixrox"
+      passwordHash:
+        "$2b$10$K7L1OJ45/4Y2nIvhRVpCe.FSmhDdWoXehVzJptJ/op0lSsvqNu/1u",
+    },
+  })
   await Promise.all(
     getJokes().map((joke) => {
-      return db.joke.create({ data: joke });
+      const data = { jokesterId: natac.id, ...joke }
+      return db.joke.create({ data })
     })
-  );
+  )
 }
 
-seed();
+seed()
 
 function getJokes() {
   // shout-out to https://icanhazdadjoke.com/
@@ -43,5 +52,5 @@ function getJokes() {
       name: "Elevator",
       content: `My first time using an elevator was an uplifting experience. The second time let me down.`,
     },
-  ];
+  ]
 }
