@@ -5,6 +5,7 @@ import { Link, useActionData, useSearchParams } from "@remix-run/react"
 import stylesUrl from "~/styles/login.css"
 import { db } from "~/utils/db.server"
 import { badRequest } from "~/utils/request.server"
+import { createUserSession, login } from "../utils/session.server"
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesUrl },
@@ -35,7 +36,7 @@ export const action = async ({ request }: ActionArgs) => {
   const loginType = form.get("loginType")
   const username = form.get("username")
   const password = form.get("password")
-  const redirectTo = validateUrl(form.get("redirectTo") || "/jokes")
+  const redirectTo = validateUrl((form.get("redirectTo") as string) || "/jokes")
   if (
     typeof loginType !== "string" ||
     typeof username !== "string" ||
@@ -65,13 +66,17 @@ export const action = async ({ request }: ActionArgs) => {
   switch (loginType) {
     case "login": {
       // login to get the user
+      const user = await login({ username, password })
       // if there's no user, return the fields and a formError
+      if (!user) {
+        return badRequest({
+          fieldErrors: null,
+          fields,
+          formError: `Invalid username or password`,
+        })
+      }
       // if there is a user, create their session and redirect to /jokes
-      return badRequest({
-        fieldErrors: null,
-        fields,
-        formError: "Not implemented",
-      })
+      return createUserSession(user.id, redirectTo)
     }
     case "register": {
       const userExists = await db.user.findFirst({
