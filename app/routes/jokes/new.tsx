@@ -1,10 +1,32 @@
-import type { ActionArgs } from "@remix-run/node"
+import type { ActionArgs, LoaderFunction } from "@remix-run/node"
 import { redirect } from "@remix-run/node"
-import { useActionData } from "@remix-run/react"
+import { Link, useActionData, useCatch } from "@remix-run/react"
 
 import { db } from "~/utils/db.server"
 import { badRequest } from "~/utils/request.server"
 import { getUserId, requireUserId } from "../../utils/session.server"
+
+export const loader: LoaderFunction = async ({ request }) => {
+  const userId = await getUserId(request)
+  if (!userId) {
+    throw new Response("Login Please", {
+      status: 401,
+    })
+  }
+  return {}
+}
+
+export function CatchBoundary() {
+  const caught = useCatch()
+  if (caught.status === 401 && caught.data === "Login Please") {
+    return (
+      <div className="error-container">
+        <p>You must login to create a joke</p>
+        <Link to="/login">Login</Link>
+      </div>
+    )
+  }
+}
 
 function validateJokeContent(content: string) {
   if (content.length < 10) {
