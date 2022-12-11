@@ -24,7 +24,7 @@ function validatePassword(password: unknown) {
 }
 
 function validateUrl(url: string) {
-  let urls = ["/jokes", "/", "https://remix.run"]
+  let urls = ["/jokes", "/", "/jokes/new"]
   if (urls.includes(url)) {
     return url
   }
